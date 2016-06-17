@@ -88,9 +88,9 @@ public static void main(String[] args) {
    
 /********************An example of using Apache hbase-spark package********************/
     /*
-    //create the config object
+    //create the hbaseconfig object
     Configuration hbaseConfig = HBaseConfiguration.create();
-    //add the corresponding setting files into the config object
+    //add the corresponding setting files into the hbaseconfig
     hbaseConfig.addResource(new Path("/usr/local/hadoop-2.5.0-cdh5.3.9/etc/hadoop/core-site.xml"));
     hbaseConfig.addResource(new Path("/usr/local/hadoop-2.5.0-cdh5.3.9/etc/hadoop/hdfs-site.xml"));
     hbaseConfig.addResource(new Path("/usr/local/hadoop-2.5.0-cdh5.3.9/etc/hadoop/hbase-site.xml"));
