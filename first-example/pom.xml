@@ -13,6 +13,14 @@
 		    <id>cloudera-repo-releases</id>
 		    <url>https://repository.cloudera.com/artifactory/repo/</url>
 		  </repository>
+		  <repository>
+		  	<id>Apache-HBase-Spark-snapshots</id>
+		  	<url>https://repository.apache.org/content/repositories/snapshots</url>
+		  </repository>
+		  <repository>
+		  	<id>Apache-HBase-Spark-release</id>
+		  	<url>https://repository.apache.org/content/repositories/releases</url>
+		  </repository>
 	</repositories>
 
     <dependencies>
@@ -39,6 +47,11 @@
 			  <groupId>com.cloudera</groupId>
 			  <artifactId>spark-hbase</artifactId>
 			  <version>0.0.2-clabs</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-spark</artifactId>
+			<version>2.0.0-20160316.173537-2</version>
 		</dependency>
     </dependencies>
 

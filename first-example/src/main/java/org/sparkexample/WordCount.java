@@ -6,11 +6,11 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.spark.JavaHBaseContext;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -19,10 +19,14 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.api.java.function.VoidFunction;
 
 import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class WordCount {
   private static final FlatMapFunction<String, String> WORDS_EXTRACTOR =
@@ -81,7 +85,8 @@ public static void main(String[] args) {
     counter.saveAsTextFile(args[1]);
     context.stop();
     
-    /*Configuration for using HBase*/
+   
+/********************An example of using Apache hbase-spark package********************/
     /*
     //create the config object
     Configuration hbaseConfig = HBaseConfiguration.create();
@@ -95,32 +100,42 @@ public static void main(String[] args) {
     hbaseConfig.set("hbase.client.keyvalue.maxsize","0");
     //set the connect user name to hdfs
     System.setProperty("HADOOP_USER_NAME", "hdfs");
-    //create the connection using the config object
-    Connection conn = ConnectionFactory.createConnection(hbaseConfig);
-    */
+    //create JavaHBaseContext
+    JavaHBaseContext hbaseContext = new JavaHBaseContext(context, hbaseConfig);
     
-    /*The simple get operation of HBase*/
-    /*
-    //get table object by specifying table name
-    Table table = conn.getTable(TableName.valueOf("test"));
-    //create the get object by the row_id we want to access
-    Get g = new Get(Bytes.toBytes("row_id"));
-    //get the result
-    Result r = table.get(g);
-    */
-    
-    /*Batch put operation of HBase*/
-    /*
-    //create BufferedMutator object for batch put
-    BufferedMutator mutator = conn.getBufferedMutator(TableName.valueOf("test"));
-    //create the put object by specifying row_id
-    Put p = new Put(Bytes.toBytes("row_id"));
-    //add content to put object
-    p.addColumn(Bytes.toBytes("family"), Bytes.toBytes("qualifier"), Bytes.toBytes("value"));
-    //insert put object into mutator
-    mutator.mutate(p);
-    mutator.close();
-    conn.close();
+    try {
+    	  List<byte[]> list = new ArrayList<>();
+    	  list.add(Bytes.toBytes("row_id01"));
+    	  list.add(Bytes.toBytes("row_id02"));
+    	  list.add(Bytes.toBytes("row_id03"));
+    	  list.add(Bytes.toBytes("row_id04"));
+    	  list.add(Bytes.toBytes("row_id05"));
+
+    	  JavaRDD<byte[]> rdd = context.parallelize(list);
+    	  //Applies a function to each partition of the RDD
+    	  hbaseContext.foreachPartition(rdd,
+    	      new VoidFunction<Tuple2<Iterator<byte[]>, Connection>>() {
+    	   public void call(Tuple2<Iterator<byte[]>, Connection> t)
+    	        throws Exception {
+    		//get table object from the connection object
+    	    Table table = t._2().getTable(TableName.valueOf("tableName"));
+    	    //get bufferedmutator from the connection object(for batch input operations)
+    	    BufferedMutator mutator = t._2().getBufferedMutator(TableName.valueOf("tableName"));
+    	    while (t._1().hasNext()) {
+    	      byte[] b = t._1().next();
+    	      Result r = table.get(new Get(b));
+    	      if (r.getExists()) {
+    	       mutator.mutate(new Put(b));
+    	      }
+    	    }
+    	    mutator.flush();
+    	    mutator.close();
+    	    table.close();
+    	   }
+    	  });
+    	} finally {
+    		context.stop();
+    	}
     */
   }
 }
